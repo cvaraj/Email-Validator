@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect
 import pandas as pd
 from email_validator import validate_email, EmailNotValidError
+import os
 
 app = Flask(__name__)
 
@@ -44,12 +45,24 @@ def upload():
                 # Save valid and invalid emails to Excel sheets
                 save_to_excel(pd.DataFrame(valid_emails), 'valid_emails.xlsx')
                 save_to_excel(pd.DataFrame(invalid_emails), 'invalid_emails.xlsx')
-                return "Files processed successfully! Check your directory for the results."
+                
+                # Redirect users to download the files
+                return redirect('/download')
             except Exception as e:
                 return "Error processing file: " + str(e)
         else:
             return "Only Excel files (.xlsx) are allowed."
     return redirect(request.url)
+
+@app.route('/download')
+def download():
+    # Set the file paths for the valid and invalid email files
+    valid_file_path = os.path.abspath('valid_emails.xlsx')
+    invalid_file_path = os.path.abspath('invalid_emails.xlsx')
+    
+    # Serve the files for download
+    return render_template('download.html', valid_file=valid_file_path, invalid_file=invalid_file_path)
+
 
 if __name__ == '__main__':
       app.run(host='0.0.0.0', port=10000)
